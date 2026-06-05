@@ -1,0 +1,10 @@
+# 処理済みキーワード（必要に応じてコミットしてもOK）
+keyword-queue/*.done
+
+# OS
+.DS_Store
+Thumbs.db
+
+# エディタ
+.vscode/
+*.swp
