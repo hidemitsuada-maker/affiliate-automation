@@ -7,6 +7,10 @@ keyword-queue/*.skip
 # 生成ログ
 *.log
 
+# Python バイトコードキャッシュ(再生成可能)
+__pycache__/
+*.pyc
+
 # OS
 .DS_Store
 Thumbs.db
