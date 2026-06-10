@@ -1,0 +1,49 @@
+<!-- ============================================================
+  無料相談CTAパーツ（cocoon-custom.css とセットで使用）
+  使い方:
+   1) Cocoonの「カスタムブロック」or「再利用ブロック」に登録 → 記事末尾＆中盤に差し込む
+   2) または記事内に「カスタムHTML」ブロックで直接貼る
+  ★ href="#" の部分を、A8.netで取得したアフィリエイトリンクに差し替える
+  ★ {SERVICE} はサービス名（例: GKSキャリア / Neuro Dive 等）に置換
+============================================================ -->
+
+
+<!-- ① 記事末尾用：フルCTAボックス（一番コンバージョンする位置） -->
+<div class="cta-box">
+  <p class="cta-box__title">まずは無料で相談してみませんか？</p>
+  <p class="cta-box__lead">
+    一人で悩むより、IT転職に強いプロに話すのが近道です。<br>
+    あなたの経験がどう活かせるか、無料で相談できます。
+  </p>
+  <a href="#" class="cta-btn" target="_blank" rel="nofollow noopener">
+    {SERVICE}に無料相談する
+    <span class="cta-btn__sub">登録・相談は無料 / オンライン可</span>
+  </a>
+  <p class="cta-note">※相談だけの利用もOK。無理な勧誘はありません。</p>
+</div>
+
+
+<!-- ② 記事中盤用：シンプルなインラインCTA（文脈の切れ目に1つ） -->
+<div style="text-align:center; margin:2em 0;">
+  <a href="#" class="cta-btn cta-btn--inline" target="_blank" rel="nofollow noopener">
+    {SERVICE}の無料相談を見てみる
+  </a>
+  <p class="cta-note">登録1分・完全無料</p>
+</div>
+
+
+<!-- ③ 複数サービス比較用：ボタンを縦に並べる（Pillar記事の締めなどに） -->
+<div class="cta-box">
+  <p class="cta-box__title">目的別におすすめの相談先</p>
+  <p class="cta-box__lead">気になるところから、まず話を聞いてみてください。</p>
+
+  <a href="#" class="cta-btn" target="_blank" rel="nofollow noopener" style="margin:.4em 0;">
+    {SERVICE_A}（未経験から幅広く）
+  </a><br>
+
+  <a href="#" class="cta-btn" target="_blank" rel="nofollow noopener" style="margin:.4em 0; background:var(--brand); box-shadow:0 4px 0 var(--brand-dark);">
+    {SERVICE_B}（特化型サポート）
+  </a>
+
+  <p class="cta-note">※いずれも登録・相談は無料です。</p>
+</div>

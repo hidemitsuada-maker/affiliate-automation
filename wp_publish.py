@@ -11,29 +11,66 @@ usage:
 import os
 import re
 import sys
+import json
 import requests
 from requests.auth import HTTPBasicAuth
+from site_config import NICHES
+import thumbnail as thumb
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 BASE = "https://it-career-navi.net/wp-json/wp/v2"
 USER = os.environ.get("WP_USER", "")
 APP = os.environ.get("WP_APP_PASS", "")
 AUTH = HTTPBasicAuth(USER, APP)
+# WP_FORCE_STATUS=draft を指定すると、articles.jsonの個別statusを無視して全件下書きにする。
+# 公開前の目視確認用(本番公開はこの環境変数を付けずに実行)。
+FORCE_STATUS = os.environ.get("WP_FORCE_STATUS", "")
 
-# 記事 → (file, category_slug, category_name, post_slug)
+# 記事/ページのレジストリは articles.json(単一ソース)から読む。
+# 新規記事は new_article.py が articles.json に追記する(手編集不要)。
+_REG = json.load(open(os.path.join(os.path.dirname(__file__), "articles.json"), encoding="utf-8"))
+# 記事 → (file, category_slug, category_name, post_slug, status)。category_name は site_config から解決。
 ARTICLES = [
-    ("drafts/article-A-construction-it-career.md", "construction", "施工管理からのIT転職", "inexperienced-truth"),
-    ("drafts/article-B-sier-inhouse-se.md", "inhouse-se", "社内SE転職", "sier-salary-reality"),
-    ("drafts/article-C-inhouse-se-childcare.md", "inhouse-se", "社内SE転職", "childcare-work-balance"),
-    ("drafts/article-D-adhd-it-career.md", "vocational-support", "IT就労移行・社会復帰", "adhd-remote-it"),
-    ("drafts/article-E-tax-accountant-it-career.md", "tax-accountant", "税理士からのIT転職", "age-34-too-late"),
+    (a["file"], a["niche"], NICHES[a["niche"]]["category_name"], a["slug"], a["status"])
+    for a in _REG["articles"]
 ]
+# 固定ページ → (file, page_slug)。E-E-A-T/アフィ規約上の必須ページ。カテゴリなし。
+PAGES = [(p["file"], p["slug"]) for p in _REG["pages"]]
+
+
+def extract_meta(md):
+    """先頭付近の `<!-- meta: ... -->` を抜き出してメタディスクリプション(excerpt)に使う。"""
+    m = re.search(r"<!--\s*meta:\s*(.*?)\s*-->", md)
+    return m.group(1).strip() if m else ""
 
 
 def _inline(t):
     t = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    # 画像 ![alt](src) → <img>。alt必須(SEO/アクセシビリティ)。altは escape 済みなので decode して属性化。
+    def _img(m):
+        alt = m.group(1).replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        return f'<img src="{m.group(2)}" alt="{alt}" loading="lazy" />'
+    t = re.sub(r"!\[(.*?)\]\((.*?)\)", _img, t)
+    # リンク [text](url)。内部(自サイト/相対)=follow・同タブ / 外部(アフィ含む)=nofollow・別タブ。
+    def _link(m):
+        text, url = m.group(1), m.group(2)
+        internal = ("it-career-navi.net" in url) or url.startswith("/") or url.startswith("#")
+        if internal:
+            return f'<a href="{url}">{text}</a>'
+        return f'<a href="{url}" rel="nofollow noopener" target="_blank">{text}</a>'
+    t = re.sub(r"(?<!!)\[(.+?)\]\((.+?)\)", _link, t)
     t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
     t = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", r"<em>\1</em>", t)
     return t
+
+
+def lint_alt(md, label):
+    """alt空の画像を検出して警告(SEO的にalt必須)。"""
+    bad = re.findall(r"!\[\s*\]\((.*?)\)", md)
+    for src in bad:
+        print(f"  ⚠ alt属性なし画像 [{label}]: {src} ← alt文を入れてください")
+    return len(bad)
 
 
 def md_to_html(md):
@@ -54,6 +91,18 @@ def md_to_html(md):
         # skip HTML comments / hr / blank
         if ln.startswith("<!--") or ln in ("---", ""):
             i += 1
+            continue
+        # 生HTMLブロック(埋め込んだA8の<a>/<img>等)はエスケープせずそのまま通す。
+        # 空行 or コメントが来るまでを1ブロックとして連結。
+        if ln.startswith("<"):
+            raw = []
+            while i < len(lines):
+                s = lines[i].strip()
+                if not s or s.startswith("<!--"):
+                    break
+                raw.append(s)
+                i += 1
+            html.append("\n".join(raw))
             continue
         # headings
         m = re.match(r"^(#{2,4})\s+(.*)$", ln)
@@ -134,6 +183,27 @@ def ensure_category(slug, name):
     raise RuntimeError(f"category {slug} failed: {r.status_code} {r.text[:120]}")
 
 
+def upload_thumbnail(slug, title, niche, cname):
+    """アイキャッチを生成→WPメディアへアップし media id を返す(冪等)。
+    既に article-<slug> のメディアがあれば作り直さず再利用する。失敗時は None。"""
+    media_slug = f"article-{slug}"
+    r = requests.get(BASE + f"/media?slug={media_slug}&per_page=1", auth=AUTH, timeout=20)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]["id"]
+    png = thumb.make_thumbnail(title, niche, cname,
+                               os.path.join(HERE, "thumbs", f"{media_slug}.png"))
+    headers = {"Content-Disposition": f'attachment; filename="{media_slug}.png"',
+               "Content-Type": "image/png"}
+    r = requests.post(BASE + "/media", auth=AUTH, headers=headers,
+                      data=open(png, "rb").read(), timeout=60)
+    if r.status_code in (200, 201):
+        mid = r.json()["id"]
+        requests.post(BASE + f"/media/{mid}", auth=AUTH, json={"alt_text": title}, timeout=20)
+        return mid
+    print(f"  ⚠ サムネupload失敗 {slug}: {r.status_code} {r.text[:120]}")
+    return None
+
+
 def find_post_by_slug(slug):
     r = requests.get(BASE + f"/posts?slug={slug}&status=draft,publish,pending,future&per_page=1",
                      auth=AUTH, timeout=20)
@@ -142,18 +212,57 @@ def find_post_by_slug(slug):
     return None
 
 
+def find_page_by_slug(slug):
+    r = requests.get(BASE + f"/pages?slug={slug}&status=draft,publish,pending,future&per_page=1",
+                     auth=AUTH, timeout=20)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]["id"]
+    return None
+
+
+def thumb_only():
+    """既存投稿の featured_media(サムネ)だけを更新する。本文/status/カテゴリは触らない。
+    WP上に未投稿の記事はスキップ(新規作成しない)。WP_THUMB_ONLY=1 で起動。"""
+    for path, cslug, cname, pslug, status in ARTICLES:
+        title, _ = md_to_html(open(path, encoding="utf-8").read())
+        existing = find_post_by_slug(pslug)
+        if not existing:
+            print(f"– 未投稿スキップ slug={pslug}")
+            continue
+        mid = upload_thumbnail(pslug, title, cslug, cname)
+        if not mid:
+            print(f"✗ サムネ生成失敗 slug={pslug}"); continue
+        r = requests.post(BASE + f"/posts/{existing}", auth=AUTH,
+                          json={"featured_media": mid}, timeout=30)
+        if r.status_code in (200, 201):
+            print(f"✓ サムネ更新 id={existing} slug={pslug} media={mid} title={title}")
+        else:
+            print(f"✗ FAIL slug={pslug}: {r.status_code} {r.text[:160]}")
+
+
 def main():
     if not USER or not APP:
         print("WP_USER / WP_APP_PASS env 未設定"); sys.exit(1)
+    if os.environ.get("WP_THUMB_ONLY"):
+        return thumb_only()
     cat_cache = {}
-    for path, cslug, cname, pslug in ARTICLES:
+    for path, cslug, cname, pslug, status in ARTICLES:
         md = open(path, encoding="utf-8").read()
+        lint_alt(md, pslug)
         title, content = md_to_html(md)
+        meta = extract_meta(md)
         if cslug not in cat_cache:
             cat_cache[cslug] = ensure_category(cslug, cname)
         cid = cat_cache[cslug]
         payload = {"title": title, "content": content, "slug": pslug,
-                   "status": "draft", "categories": [cid]}
+                   "status": FORCE_STATUS or status, "categories": [cid]}
+        # メタディスクリプション: Cocoonは抜粋(excerpt)を自動でmeta descriptionに使う設定が可能。
+        if meta:
+            payload["excerpt"] = meta
+        # アイキャッチ(サムネ)を生成・アップしてfeatured_mediaに設定(冪等)
+        mid = upload_thumbnail(pslug, title, cslug, cname)
+        if mid:
+            payload["featured_media"] = mid
         existing = find_post_by_slug(pslug)
         if existing:
             r = requests.post(BASE + f"/posts/{existing}", auth=AUTH, json=payload, timeout=30)
@@ -163,7 +272,32 @@ def main():
             action = "新規"
         if r.status_code in (200, 201):
             j = r.json()
-            print(f"✓ {action} draft id={j['id']} [{cslug}] slug={pslug} title={title[:30]}")
+            print(f"✓ {action} {FORCE_STATUS or status} id={j['id']} [{cslug}] slug={pslug} title={title}({len(title)}字)")
+            if meta:
+                print(f"    meta({len(meta)}字): {meta}")
+            print(f"    編集: https://it-career-navi.net/wp-admin/post.php?post={j['id']}&action=edit")
+        else:
+            print(f"✗ FAIL {path}: {r.status_code} {r.text[:160]}")
+
+    # 固定ページ(運営者情報/プライバシーポリシー/免責/お問い合わせ)
+    for path, pslug in PAGES:
+        md = open(path, encoding="utf-8").read()
+        lint_alt(md, pslug)
+        title, content = md_to_html(md)
+        meta = extract_meta(md)
+        payload = {"title": title, "content": content, "slug": pslug, "status": FORCE_STATUS or "publish"}
+        if meta:
+            payload["excerpt"] = meta
+        existing = find_page_by_slug(pslug)
+        if existing:
+            r = requests.post(BASE + f"/pages/{existing}", auth=AUTH, json=payload, timeout=30)
+            action = "更新"
+        else:
+            r = requests.post(BASE + "/pages", auth=AUTH, json=payload, timeout=30)
+            action = "新規"
+        if r.status_code in (200, 201):
+            j = r.json()
+            print(f"✓ {action} page id={j['id']} slug={pslug} title={title}({len(title)}字)")
             print(f"    編集: https://it-career-navi.net/wp-admin/post.php?post={j['id']}&action=edit")
         else:
             print(f"✗ FAIL {path}: {r.status_code} {r.text[:160]}")

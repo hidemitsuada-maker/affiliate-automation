@@ -1,0 +1,100 @@
+{
+  "articles": [
+    {
+      "file": "drafts/article-A-construction-it-career.md",
+      "niche": "construction",
+      "slug": "inexperienced-truth",
+      "status": "draft"
+    },
+    {
+      "file": "drafts/article-B-sier-inhouse-se.md",
+      "niche": "inhouse-se",
+      "slug": "sier-salary-reality",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-C-inhouse-se-childcare.md",
+      "niche": "inhouse-se",
+      "slug": "childcare-work-balance",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-D-adhd-it-career.md",
+      "niche": "vocational-support",
+      "slug": "adhd-remote-it",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-E-tax-accountant-it-career.md",
+      "niche": "tax-accountant",
+      "slug": "age-34-too-late",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/pillar-P1-construction.md",
+      "niche": "construction",
+      "slug": "construction-it-guide",
+      "status": "draft"
+    },
+    {
+      "file": "drafts/pillar-P2-inhouse-se.md",
+      "niche": "inhouse-se",
+      "slug": "sier-inhouse-se-guide",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/pillar-P3-tax-accountant.md",
+      "niche": "tax-accountant",
+      "slug": "tax-accountant-it-guide",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/pillar-P4-vocational-support.md",
+      "niche": "vocational-support",
+      "slug": "vocational-it-guide",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-accounting-office-quit.md",
+      "niche": "tax-accountant",
+      "slug": "accounting-office-quit",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-tax-exam-give-up-career.md",
+      "niche": "tax-accountant",
+      "slug": "tax-exam-give-up-career",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-boki2-it-jobs.md",
+      "niche": "tax-accountant",
+      "slug": "boki2-it-jobs",
+      "status": "publish"
+    },
+    {
+      "file": "drafts/article-inhouse-se-motivation.md",
+      "niche": "inhouse-se",
+      "slug": "inhouse-se-motivation",
+      "status": "draft"
+    }
+  ],
+  "pages": [
+    {
+      "file": "drafts/page-about.md",
+      "slug": "about"
+    },
+    {
+      "file": "drafts/page-privacy-policy.md",
+      "slug": "privacy-policy"
+    },
+    {
+      "file": "drafts/page-disclaimer.md",
+      "slug": "disclaimer"
+    },
+    {
+      "file": "drafts/page-contact.md",
+      "slug": "contact"
+    }
+  ]
+}

@@ -1,5 +1,11 @@
+# APIキー等の秘密(絶対コミットしない)
+.env
+
 # 処理済みキーワード（必要に応じてコミットしてもOK）
 keyword-queue/*.done
+keyword-queue/*.skip
+# 生成ログ
+*.log
 
 # OS
 .DS_Store
@@ -8,3 +14,9 @@ Thumbs.db
 # エディタ
 .vscode/
 *.swp
+
+# 生成サムネ(再生成可能)
+thumbs/
+
+# GSC サービスアカウント鍵(絶対コミットしない)
+gsc-sa.json

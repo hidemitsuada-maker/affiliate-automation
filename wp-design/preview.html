@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デザインプレビュー｜IT転職ナビ</title>
+<style>
+/* ===== ページ全体の枠（プレビュー用・本番では不要） ===== */
+body { background:#dfe6ec; margin:0; font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
+.preview-wrap { max-width:780px; margin:24px auto; background:#fff; padding:28px 32px 48px; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.1); }
+.preview-bar { max-width:780px; margin:16px auto 0; color:#445; font-size:13px; padding:0 8px; }
+.entry-title { font-size:1.7em; line-height:1.45; margin:.2em 0 1em; color:#1a1a1a; }
+
+/* ============================================================
+   ↓↓↓ ここから下が本番のカスタムCSS（cocoon-custom.css と同一） ↓↓↓
+   ============================================================ */
+:root {
+  --brand:#0b6fb8; --brand-dark:#095a96;
+  --cta:#1aa260; --cta-dark:#14894f; --cta-hover:#17b56c;
+  --soft-bg:#eef6fb; --pr-bg:#f5f5f5; --text:#333;
+}
+.entry-content { font-size:16px; line-height:1.9; color:var(--text); letter-spacing:.02em; }
+.entry-content p { margin:1em 0 1.4em; }
+.entry-content h2 { background:none; border:none; border-left:6px solid var(--brand); border-bottom:2px solid var(--brand); padding:.5em .7em; font-size:1.5em; line-height:1.5; margin:2.2em 0 1em; }
+.entry-content h3 { border-left:5px solid var(--brand); background:var(--soft-bg); padding:.45em .7em; font-size:1.22em; margin:1.8em 0 .9em; }
+.entry-content a { color:var(--brand); text-decoration:underline; word-break:break-all; }
+.entry-content a:hover { color:var(--brand-dark); }
+.entry-content table { border-collapse:collapse; width:100%; margin:1.5em 0; font-size:.95em; display:block; overflow-x:auto; white-space:nowrap; }
+.entry-content table th { background:var(--brand); color:#fff; font-weight:700; padding:.7em .9em; border:1px solid var(--brand-dark); text-align:left; }
+.entry-content table td { padding:.7em .9em; border:1px solid #ddd; }
+.entry-content table tr:nth-child(even) td { background:#f7fbfe; }
+.entry-content blockquote { background:var(--pr-bg); border-left:4px solid #bbb; color:#666; font-size:.9em; margin:0 0 1.6em; padding:.7em 1em; border-radius:4px; }
+.entry-content blockquote p { margin:0; }
+.entry-content ul { margin:1em 0 1.6em; padding-left:1.4em; }
+.entry-content ul li { margin:.5em 0; list-style:none; position:relative; padding-left:1.4em; }
+.entry-content ul li::before { content:"✓"; color:var(--cta); font-weight:700; position:absolute; left:0; }
+.entry-content ol { margin:1em 0 1.6em; padding-left:1.6em; }
+.entry-content ol li { margin:.6em 0; }
+.cta-box { background:linear-gradient(180deg,#fff 0%,var(--soft-bg) 100%); border:2px solid var(--brand); border-radius:12px; padding:1.5em 1.4em; margin:2.2em 0; text-align:center; box-shadow:0 3px 12px rgba(11,111,184,.08); }
+.cta-box .cta-box__title { font-size:1.25em; font-weight:700; color:var(--brand-dark); margin:0 0 .5em; }
+.cta-box .cta-box__lead { font-size:.98em; color:#555; margin:0 0 1.1em; line-height:1.8; }
+.cta-btn { display:inline-block; background:var(--cta); color:#fff !important; font-size:1.18em; font-weight:700; text-decoration:none !important; padding:.85em 2.2em; border-radius:50px; box-shadow:0 4px 0 var(--cta-dark); transition:all .15s ease; line-height:1.4; max-width:100%; }
+.cta-btn:hover { background:var(--cta-hover); transform:translateY(2px); box-shadow:0 2px 0 var(--cta-dark); color:#fff !important; }
+.cta-btn .cta-btn__sub { display:block; font-size:.68em; font-weight:500; opacity:.95; margin-top:.2em; }
+.cta-note { font-size:.82em; color:#888; margin:.8em 0 0; }
+.cta-btn--inline { font-size:1.02em; padding:.6em 1.6em; box-shadow:0 3px 0 var(--cta-dark); }
+@media screen and (max-width:480px) {
+  .entry-content { font-size:15.5px; }
+  .cta-btn { font-size:1.05em; padding:.8em 1.4em; width:100%; box-sizing:border-box; }
+  .cta-box { padding:1.3em 1em; }
+}
+</style>
+</head>
+<body>
+
+<div class="preview-bar">▼ これは見た目確認用のプレビューです。本番ではCocoonがこの周りのヘッダー/フッターを付けます。ウィンドウ幅を狭めるとスマホ表示も確認できます。</div>
+
+<div class="preview-wrap">
+  <h1 class="entry-title">施工管理・現場職からのIT転職 完全ガイド｜未経験から始める進め方</h1>
+
+  <div class="entry-content">
+
+    <blockquote><p><strong>本記事にはプロモーション（広告）が含まれます。</strong></p></blockquote>
+
+    <h2>この記事でわかること</h2>
+    <ul>
+      <li>現場職・施工管理からIT業界へ転職する人が増えている理由</li>
+      <li>現場経験がIT転職で評価される具体的な場面</li>
+      <li>職種別の選びやすさと、自分に合うルートの見つけ方</li>
+    </ul>
+
+    <h2>「このまま現場を続けていいのか」と思ったら</h2>
+    <p>夜勤明けの帰り道、ふと「あと10年この働き方は無理かもしれない」と思った。そんな人がIT転職を調べ始めるケースは、本当によくあります。</p>
+    <p>結論から言うと、現場職からのIT転職はできます。しかも現場経験は、思っているより評価されます。</p>
+
+    <h3>工程・品質・安全の管理経験</h3>
+    <p>IT現場でもプロジェクトを回す基本は変わりません。QCDS（品質・コスト・納期・安全）を体で覚えてきた人は、社内SEやプロジェクト管理の現場で重宝されることがあります。</p>
+
+    <!-- ② 記事中盤インラインCTA -->
+    <div style="text-align:center; margin:2em 0;">
+      <a href="#" class="cta-btn cta-btn--inline">IT転職エージェントの無料相談を見てみる</a>
+      <p class="cta-note">登録1分・完全無料</p>
+    </div>
+
+    <h2>どの職種を狙うか：現場職から入りやすい順</h2>
+    <table>
+      <tr><th>職種</th><th>特徴</th><th>活きやすさ</th><th>未経験採用</th></tr>
+      <tr><td>建設DX・建設テック</td><td>現場知識を武器にできる</td><td>◎ 非常に高い</td><td>増加中</td></tr>
+      <tr><td>社内SE</td><td>業務理解×IT知識</td><td>○ 高い</td><td>中程度</td></tr>
+      <tr><td>IT営業</td><td>技術より折衝力</td><td>○ 高い</td><td>多い</td></tr>
+      <tr><td>ITエンジニア（開発）</td><td>技術習得が必要</td><td>△ 中程度</td><td>あり（倍率高）</td></tr>
+    </table>
+    <p>迷ったら「建設DX系」か「社内SE」から考えるのが無難です。前職の知識を捨てずに済むので入社後の立ち上がりが早く、面接でも経験を語りやすい。</p>
+
+    <h2>未経験から内定までの進め方</h2>
+    <ol>
+      <li>現場の実績を「IT転職の言葉」に翻訳する</li>
+      <li>IT転職専門のエージェントに相談する</li>
+      <li>ITパスポートなど基礎スキルを少しだけ先に積む</li>
+    </ol>
+
+    <!-- ① 記事末尾フルCTAボックス -->
+    <div class="cta-box">
+      <p class="cta-box__title">まずは無料で相談してみませんか？</p>
+      <p class="cta-box__lead">一人で悩むより、IT転職に強いプロに話すのが近道です。<br>あなたの経験がどう活かせるか、無料で相談できます。</p>
+      <a href="#" class="cta-btn">GKSキャリアに無料相談する<span class="cta-btn__sub">登録・相談は無料 / オンライン可</span></a>
+      <p class="cta-note">※相談だけの利用もOK。無理な勧誘はありません。</p>
+    </div>
+
+    <!-- ③ 複数比較CTA -->
+    <div class="cta-box">
+      <p class="cta-box__title">目的別におすすめの相談先</p>
+      <p class="cta-box__lead">気になるところから、まず話を聞いてみてください。</p>
+      <a href="#" class="cta-btn" style="margin:.4em 0;">GKSキャリア（未経験から幅広く）</a><br>
+      <a href="#" class="cta-btn" style="margin:.4em 0; background:var(--brand); box-shadow:0 4px 0 var(--brand-dark);">社内SE転職ナビ（特化型サポート）</a>
+      <p class="cta-note">※いずれも登録・相談は無料です。</p>
+    </div>
+
+    <p><em>この記事は公開情報と一般的なキャリアアドバイスに基づいて作成しています。個別の転職結果を保証するものではありません。</em></p>
+
+  </div>
+</div>
+
+</body>
+</html>
