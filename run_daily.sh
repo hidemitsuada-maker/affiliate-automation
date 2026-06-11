@@ -23,5 +23,8 @@ WP_SYNC=1 "$PY" wp_publish.py || echo "[run_daily] wp_sync 失敗(続行)"
 # サイトマップ登録(冪等。一度通れば以降は204。所有権の伝播前は権限不足で空振り)
 # .envはgsc_submit内の_load_envが読む。--if-configuredでSA未設定時は正常skip。
 "$PY" gsc_submit.py --sitemap --if-configured || echo "[run_daily] gsc(sitemap) 失敗(続行)"
+# 検索パフォーマンスの日次スナップショットを履歴に追記(効果測定の土台)。
+# GSC_SA_JSON未設定なら get_session が落ちるが || で続行。サイト追加の自己修復も兼ねる。
+"$PY" gsc_report.py --save >/dev/null 2>&1 || echo "[run_daily] gsc_report 失敗(続行)"
 
 echo "===== run_daily done ====="

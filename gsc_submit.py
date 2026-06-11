@@ -108,10 +108,22 @@ def submit(session, url):
     return False, f"{r.status_code} {r.text[:160]}"
 
 
+def ensure_site(session):
+    """SAのSearch Consoleアカウントに対象サイトを追加(冪等, PUT /sites)。
+    Site Verification で所有者になっていても sites.add しないと
+    searchAnalytics/sitemaps が 403 になる(=過去の403の真因)。検証済みなら204。"""
+    from urllib.parse import quote
+    site = DOMAIN + "/"
+    r = session.put(f"https://www.googleapis.com/webmasters/v3/sites/{quote(site, safe='')}",
+                    timeout=30)
+    return r.status_code in (200, 204)
+
+
 def submit_sitemap():
     """WP標準サイトマップを Search Console に登録(冪等)。所有権の伝播前は403/権限不足。"""
     from urllib.parse import quote
     session = get_session(WEBMASTERS_SCOPES)
+    ensure_site(session)  # サイト未追加なら追加(403の自己修復)
     site = DOMAIN + "/"
     base = (f"https://www.googleapis.com/webmasters/v3/sites/{quote(site, safe='')}"
             f"/sitemaps/{quote(SITEMAP_URL, safe='')}")
