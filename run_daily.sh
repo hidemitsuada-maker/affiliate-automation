@@ -21,6 +21,8 @@ AFFI_AUTO_PUBLISH=1 "$PY" generate_article.py || echo "[run_daily] generate 失�
 WP_SYNC=1 "$PY" wp_publish.py || echo "[run_daily] wp_sync 失敗(続行)"
 # 同一ニッチの公開記事を相互内部リンク(トピッククラスタ強化)。冪等。新記事公開のたび全記事を最新化。
 "$PY" internal_links.py || echo "[run_daily] internal_links 失敗(続行)"
+# FAQ自動生成 + FAQPage構造化データ注入(SERPのFAQリッチリザルト→CTR↑)。FAQ未付与の公開記事のみ処理(冪等)。
+"$PY" faq_inject.py || echo "[run_daily] faq_inject 失敗(続行)"
 "$PY" gsc_submit.py --if-configured || echo "[run_daily] gsc(URL送信) 失敗(続行)"
 # サイトマップ登録(冪等。一度通れば以降は204。所有権の伝播前は権限不足で空振り)
 # .envはgsc_submit内の_load_envが読む。--if-configuredでSA未設定時は正常skip。
