@@ -19,10 +19,26 @@ import thumbnail as thumb
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+
+# .env 簡易ローダ(gsc_submit.py と同方式)。日次ジョブは .env を source しないので
+# WP_USER / WP_APP_PASS をここで読む。明示的な環境変数があればそちらを優先(setdefault)。
+def _load_env():
+    p = os.path.join(HERE, ".env")
+    if os.path.exists(p):
+        for ln in open(p, encoding="utf-8"):
+            ln = ln.strip()
+            if ln and not ln.startswith("#") and "=" in ln:
+                k, v = ln.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_load_env()
+
 BASE = "https://it-career-navi.net/wp-json/wp/v2"
 USER = os.environ.get("WP_USER", "")
 APP = os.environ.get("WP_APP_PASS", "")
 AUTH = HTTPBasicAuth(USER, APP)
+REG_PATH = os.path.join(HERE, "articles.json")
 # WP_FORCE_STATUS=draft を指定すると、articles.jsonの個別statusを無視して全件下書きにする。
 # 公開前の目視確認用(本番公開はこの環境変数を付けずに実行)。
 FORCE_STATUS = os.environ.get("WP_FORCE_STATUS", "")
@@ -240,7 +256,81 @@ def thumb_only():
             print(f"✗ FAIL slug={pslug}: {r.status_code} {r.text[:160]}")
 
 
+def _get_post(slug):
+    """slugでWP投稿を引き、(id, status)を返す。無ければ(None, None)。"""
+    r = requests.get(BASE + f"/posts?slug={slug}&status=draft,publish,pending,future&per_page=1",
+                     auth=AUTH, timeout=20)
+    if r.status_code == 200 and r.json():
+        p = r.json()[0]
+        return p["id"], p["status"]
+    return None, None
+
+
+def sync_drafts():
+    """新規記事をWPの下書きとして作成し、WP側の公開をarticles.jsonに反映する(冪等)。
+
+    ・WP未投稿の記事 → status=draft で新規作成(本文/サムネ/カテゴリ/メタ付き)。
+      → WP管理画面の「投稿一覧 > 下書き」で確認・編集・公開できる。
+    ・WP既存 → 本文は触らない(WP側の編集を上書きしない)。
+      WP側で公開(publish)されていたら articles.json を publish に同期
+      = 次段の gsc_submit が自動でIndexing API送信対象に乗せる。
+
+    これでローカルmdを開かずWP管理画面だけで「目視→公開」が完結する。
+    公開トリガはWP側の操作一本になる。"""
+    if not USER or not APP:
+        print("WP_USER / WP_APP_PASS env 未設定"); sys.exit(1)
+    reg = json.load(open(REG_PATH, encoding="utf-8"))
+    cat_cache = {}
+    changed = False
+    for a in reg.get("articles", []):
+        slug = a["slug"]; niche = a["niche"]; cname = NICHES[niche]["category_name"]
+        path = a["file"] if os.path.isabs(a["file"]) else os.path.join(HERE, a["file"])
+        pid, pstatus = _get_post(slug)
+        if pid is None:
+            if not os.path.exists(path):
+                print(f"– md無し・WP未投稿でスキップ slug={slug} ({a['file']})")
+                continue
+            md = open(path, encoding="utf-8").read()
+            lint_alt(md, slug)
+            title, content = md_to_html(md)
+            meta = extract_meta(md)
+            if niche not in cat_cache:
+                cat_cache[niche] = ensure_category(niche, cname)
+            # 既存の公開意図は降格させない(json=publishならpublishで作成)。生成直後はdraft。
+            new_status = "publish" if a.get("status") == "publish" else "draft"
+            payload = {"title": title, "content": content, "slug": slug,
+                       "status": new_status, "categories": [cat_cache[niche]]}
+            if meta:
+                payload["excerpt"] = meta
+            mid = upload_thumbnail(slug, title, niche, cname)
+            if mid:
+                payload["featured_media"] = mid
+            r = requests.post(BASE + "/posts", auth=AUTH, json=payload, timeout=30)
+            if r.status_code in (200, 201):
+                j = r.json()
+                a["wp_id"] = j["id"]; changed = True
+                print(f"✓ WP{new_status}作成 id={j['id']} slug={slug} title={title}({len(title)}字)")
+                print(f"    編集: https://it-career-navi.net/wp-admin/post.php?post={j['id']}&action=edit")
+            else:
+                print(f"✗ 作成失敗 slug={slug}: {r.status_code} {r.text[:160]}")
+        else:
+            if a.get("wp_id") != pid:
+                a["wp_id"] = pid; changed = True
+            if pstatus == "publish" and a.get("status") != "publish":
+                a["status"] = "publish"; changed = True
+                print(f"↑ WP公開を検知 → articles.json を publish に同期 slug={slug} id={pid}")
+            else:
+                print(f"– 既存 slug={slug} (WP:{pstatus}, 本文は非更新)")
+    if changed:
+        json.dump(reg, open(REG_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        print(f"articles.json 更新")
+    else:
+        print("変更なし")
+
+
 def main():
+    if os.environ.get("WP_SYNC"):
+        return sync_drafts()
     if not USER or not APP:
         print("WP_USER / WP_APP_PASS env 未設定"); sys.exit(1)
     if os.environ.get("WP_THUMB_ONLY"):
