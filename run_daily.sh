@@ -19,6 +19,8 @@ AFFI_AUTO_PUBLISH=1 "$PY" generate_article.py || echo "[run_daily] generate 失�
 # 生成した記事をWP下書きとして同期(WP管理画面で目視・公開できるように)。
 # WP側で公開された記事は articles.json を publish に同期 → 次段gsc_submitが送信。
 WP_SYNC=1 "$PY" wp_publish.py || echo "[run_daily] wp_sync 失敗(続行)"
+# 同一ニッチの公開記事を相互内部リンク(トピッククラスタ強化)。冪等。新記事公開のたび全記事を最新化。
+"$PY" internal_links.py || echo "[run_daily] internal_links 失敗(続行)"
 "$PY" gsc_submit.py --if-configured || echo "[run_daily] gsc(URL送信) 失敗(続行)"
 # サイトマップ登録(冪等。一度通れば以降は204。所有権の伝播前は権限不足で空振り)
 # .envはgsc_submit内の_load_envが読む。--if-configuredでSA未設定時は正常skip。
