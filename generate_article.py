@@ -35,6 +35,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REGISTRY = os.path.join(HERE, "articles.json")
 LOG = os.path.join(HERE, "generate.log")
 
+# 自動公開: AFFI_AUTO_PUBLISH=1 で、検証(validate)を通った記事を status=publish で登録する。
+#   → WP_SYNC が publish としてWP公開 → gsc_submit がIndexing API送信、まで無人で進む。
+#   未設定(デフォルト)は従来通り status=draft(手動公開ゲート)。検証NGはどちらでも公開されない。
+AUTO_PUBLISH = os.environ.get("AFFI_AUTO_PUBLISH") == "1"
+
 # バックエンド: "cli"=Claude Code headless(サブスク枠/API課金なし) / "api"=anthropic SDK(従量課金)
 BACKEND = os.environ.get("AFFI_BACKEND", "cli")
 # CLIは "sonnet" のようなエイリアス、APIは "claude-sonnet-4-6" のような正式IDを使う
@@ -164,7 +169,8 @@ def register(file_rel, niche, slug):
     reg = json.load(open(REGISTRY, encoding="utf-8"))
     if any(a["slug"] == slug for a in reg["articles"]):
         return False
-    reg["articles"].append({"file": file_rel, "niche": niche, "slug": slug, "status": "draft"})
+    status = "publish" if AUTO_PUBLISH else "draft"
+    reg["articles"].append({"file": file_rel, "niche": niche, "slug": slug, "status": status})
     json.dump(reg, open(REGISTRY, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     return True
 
@@ -212,8 +218,12 @@ def generate_one(dry_run=False):
     open(out_abs, "w", encoding="utf-8").write(md)
     register(out_rel, niche, slug)
     kq.mark_done(path)
-    log(f"✓ 生成完了 {out_rel}  title={title}({len(title)}字) meta={len(meta)}字  status=draft")
-    log(f"  → 目視: drafts/article-{slug}.md / 公開はarticles.jsonをpublishにしてwp_publish.py")
+    status = "publish" if AUTO_PUBLISH else "draft"
+    log(f"✓ 生成完了 {out_rel}  title={title}({len(title)}字) meta={len(meta)}字  status={status}")
+    if AUTO_PUBLISH:
+        log(f"  → 自動公開モード: WP_SYNCでWP公開 → gsc_submitでIndexing送信まで無人実行")
+    else:
+        log(f"  → 目視: drafts/article-{slug}.md / 公開はarticles.jsonをpublishにしてwp_publish.py")
     return True
 
 
