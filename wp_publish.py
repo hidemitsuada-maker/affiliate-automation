@@ -240,6 +240,9 @@ def thumb_only():
     """既存投稿の featured_media(サムネ)だけを更新する。本文/status/カテゴリは触らない。
     WP上に未投稿の記事はスキップ(新規作成しない)。WP_THUMB_ONLY=1 で起動。"""
     for path, cslug, cname, pslug, status in ARTICLES:
+        if not os.path.exists(path):
+            print(f"– md削除済みスキップ slug={pslug}")
+            continue
         title, _ = md_to_html(open(path, encoding="utf-8").read())
         existing = find_post_by_slug(pslug)
         if not existing:
@@ -254,6 +257,15 @@ def thumb_only():
             print(f"✓ サムネ更新 id={existing} slug={pslug} media={mid} title={title}")
         else:
             print(f"✗ FAIL slug={pslug}: {r.status_code} {r.text[:160]}")
+
+
+def _purge_md(path):
+    """WP同期済み記事のローカルmdを削除する。削除したらTrue。元から無ければFalse。
+    本文はWP(真実の保管先)にあるので、mdはディスク節約のため残さない。"""
+    if os.path.exists(path):
+        os.remove(path)
+        return True
+    return False
 
 
 def _get_post(slug):
@@ -311,6 +323,9 @@ def sync_drafts():
                 a["wp_id"] = j["id"]; changed = True
                 print(f"✓ WP{new_status}作成 id={j['id']} slug={slug} title={title}({len(title)}字)")
                 print(f"    編集: https://it-career-navi.net/wp-admin/post.php?post={j['id']}&action=edit")
+                # WP作成に成功 = 本文はWP(真実の保管先)に入った。ローカルmdは消す。
+                if _purge_md(path):
+                    print(f"    ローカルmd削除: {a['file']}")
             else:
                 print(f"✗ 作成失敗 slug={slug}: {r.status_code} {r.text[:160]}")
         else:
@@ -321,6 +336,9 @@ def sync_drafts():
                 print(f"↑ WP公開を検知 → articles.json を publish に同期 slug={slug} id={pid}")
             else:
                 print(f"– 既存 slug={slug} (WP:{pstatus}, 本文は非更新)")
+            # WP上に存在 = mdは不要(本文はWPが真実)。残っていれば削除。
+            if _purge_md(path):
+                print(f"    ローカルmd削除: {a['file']}")
     if changed:
         json.dump(reg, open(REG_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
         print(f"articles.json 更新")
@@ -337,6 +355,9 @@ def main():
         return thumb_only()
     cat_cache = {}
     for path, cslug, cname, pslug, status in ARTICLES:
+        if not os.path.exists(path):
+            print(f"– md削除済みスキップ slug={pslug}(WP同期で公開管理。WP_SYNCで運用)")
+            continue
         md = open(path, encoding="utf-8").read()
         lint_alt(md, pslug)
         title, content = md_to_html(md)
